@@ -25,6 +25,11 @@ const ROOM_TTL = parseInt(process.env.REDIS_ROOM_TTL || '86400', 10); // seconds
  * Resolves when the connection is ready.
  */
 export async function connectRedis() {
+  if (process.env.MOCK_DB === 'true') {
+    console.log('ℹ️  [Mock DB] Redis in-memory mode enabled');
+    return;
+  }
+
   const url = process.env.REDIS_URL || 'redis://localhost:6379';
 
   client = new Redis(url, {
@@ -65,6 +70,9 @@ export function getRedisClient() {
 const opsKey = (roomId) => `room:${roomId}:ops`;
 const metaKey = (roomId) => `room:${roomId}:meta`;
 
+const mockOps = new Map();
+const mockMeta = new Map();
+
 /**
  * Appends a single operation to a room's ordered log.
  * Also resets the TTL so active rooms don't expire.
@@ -73,6 +81,12 @@ const metaKey = (roomId) => `room:${roomId}:meta`;
  * @param {import('../rooms/Room.js').Op} op
  */
 export async function appendOp(roomId, op) {
+  if (process.env.MOCK_DB === 'true') {
+    if (!mockOps.has(roomId)) mockOps.set(roomId, []);
+    mockOps.get(roomId).push(op);
+    return;
+  }
+
   const key = opsKey(roomId);
   const serialized = JSON.stringify(op);
   await client.rpush(key, serialized);
@@ -89,6 +103,10 @@ export async function appendOp(roomId, op) {
  * @returns {Promise<import('../rooms/Room.js').Op[]>}
  */
 export async function getOps(roomId) {
+  if (process.env.MOCK_DB === 'true') {
+    return mockOps.get(roomId) || [];
+  }
+
   const raw = await client.lrange(opsKey(roomId), 0, -1);
   return raw.map((s) => JSON.parse(s));
 }
@@ -108,6 +126,12 @@ export async function getOps(roomId) {
  * @param {string} opId
  */
 export async function removeOp(roomId, opId) {
+  if (process.env.MOCK_DB === 'true') {
+    const ops = mockOps.get(roomId) || [];
+    mockOps.set(roomId, ops.filter((op) => op.id !== opId));
+    return;
+  }
+
   const ops = await getOps(roomId);
   const filtered = ops.filter((op) => op.id !== opId);
 
@@ -129,6 +153,11 @@ export async function removeOp(roomId, opId) {
  * @param {import('../rooms/Room.js').Op} op
  */
 export async function redoOp(roomId, op) {
+  if (process.env.MOCK_DB === 'true') {
+    await appendOp(roomId, op);
+    return;
+  }
+
   await appendOp(roomId, op);
 }
 
@@ -138,6 +167,14 @@ export async function redoOp(roomId, op) {
  * @param {string} roomId
  */
 export async function initRoomMeta(roomId) {
+  if (process.env.MOCK_DB === 'true') {
+    mockMeta.set(roomId, {
+      createdAt: Date.now(),
+      lastActivity: Date.now(),
+    });
+    return;
+  }
+
   await client.hset(metaKey(roomId), {
     createdAt: Date.now(),
     lastActivity: Date.now(),
@@ -152,6 +189,10 @@ export async function initRoomMeta(roomId) {
  * @returns {Promise<boolean>}
  */
 export async function roomExists(roomId) {
+  if (process.env.MOCK_DB === 'true') {
+    return mockOps.has(roomId);
+  }
+
   const exists = await client.exists(opsKey(roomId));
   return exists > 0;
 }
@@ -162,5 +203,11 @@ export async function roomExists(roomId) {
  * @param {string} roomId
  */
 export async function deleteRoom(roomId) {
+  if (process.env.MOCK_DB === 'true') {
+    mockOps.delete(roomId);
+    mockMeta.delete(roomId);
+    return;
+  }
+
   await client.del(opsKey(roomId), metaKey(roomId));
 }

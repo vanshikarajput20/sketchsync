@@ -10,22 +10,22 @@
 /* ── Design Tokens ────────────────────────────────────────────────────────── */
 :root {
   /* Colors */
-  --color-bg:           #0f1117;
-  --color-surface:      #1a1d27;
-  --color-surface-2:    #21253a;
-  --color-surface-3:    #2a2f48;
+  --color-bg:           #0a0b0d;
+  --color-surface:      #111317;
+  --color-surface-2:    #181a20;
+  --color-surface-3:    #21242d;
   --color-border:       rgba(255, 255, 255, 0.08);
   --color-border-strong: rgba(255, 255, 255, 0.15);
 
-  --color-accent:       #6d6bf5;
-  --color-accent-hover: #8280f8;
-  --color-accent-glow:  rgba(109, 107, 245, 0.35);
+  --color-accent:       #7c3aed; /* Premium violet */
+  --color-accent-hover: #8b5cf6;
+  --color-accent-glow:  rgba(124, 58, 237, 0.35);
   --color-accent-2:     #ec4899;
   --color-accent-2-glow: rgba(236, 72, 153, 0.3);
 
-  --color-text:         #e8eaf2;
-  --color-text-muted:   #8b90a8;
-  --color-text-faint:   #545878;
+  --color-text:         #f3f4f6;
+  --color-text-muted:   #9ca3af;
+  --color-text-faint:   #4b5563;
 
   --color-success:      #22c55e;
   --color-warning:      #f59e0b;

@@ -20,9 +20,9 @@ import { useSocket } from '../../hooks/useSocket.js';
 import { useRoomStore } from '../../store/roomStore.js';
 import { useUndoRedo } from '../../hooks/useUndoRedo.js';
 import {
-  TOOL_PEN, TOOL_ERASER, TOOL_RECT, TOOL_CIRCLE, TOOL_LINE, TOOL_TEXT,
+  TOOL_PEN, TOOL_ERASER, TOOL_RECT, TOOL_CIRCLE, TOOL_LINE, TOOL_TRIANGLE, TOOL_STAR, TOOL_DIAMOND, TOOL_TEXT,
   OP_STROKE, OP_ERASE, OP_SHAPE, OP_TEXT,
-  SHAPE_RECT, SHAPE_CIRCLE, SHAPE_LINE,
+  SHAPE_RECT, SHAPE_CIRCLE, SHAPE_LINE, SHAPE_TRIANGLE, SHAPE_STAR, SHAPE_DIAMOND,
 } from '../../lib/operationTypes.js';
 import { renderOperation } from '../../lib/renderOperation.js';
 
@@ -103,7 +103,10 @@ export function useDrawing({ committedCanvasRef, liveCanvasRef }) {
     } else if (
       tool.activeTool === TOOL_RECT ||
       tool.activeTool === TOOL_CIRCLE ||
-      tool.activeTool === TOOL_LINE
+      tool.activeTool === TOOL_LINE ||
+      tool.activeTool === TOOL_TRIANGLE ||
+      tool.activeTool === TOOL_STAR ||
+      tool.activeTool === TOOL_DIAMOND
     ) {
       shapeStart.current = { x, y };
     } else if (tool.activeTool === TOOL_TEXT) {
@@ -126,24 +129,33 @@ export function useDrawing({ committedCanvasRef, liveCanvasRef }) {
 
     if (tool.activeTool === TOOL_PEN || tool.activeTool === TOOL_ERASER) {
       currentPoints.current.push([x, y]);
+
       // Preview on live layer
       const previewOp = buildOp({
-        type:   tool.activeTool === TOOL_ERASER ? OP_ERASE : OP_STROKE,
-        points: currentPoints.current,
+        type:       tool.activeTool === TOOL_ERASER ? OP_ERASE : OP_STROKE,
+        brushStyle: tool.brushStyle,
+        points:     currentPoints.current,
       });
       renderOperation(liveCtx, previewOp);
     } else {
       // Shape preview
       const sx = shapeStart.current.x;
       const sy = shapeStart.current.y;
-      const shapeTypeMap = { [TOOL_RECT]: SHAPE_RECT, [TOOL_CIRCLE]: SHAPE_CIRCLE, [TOOL_LINE]: SHAPE_LINE };
+      const shapeTypeMap = {
+        [TOOL_RECT]: SHAPE_RECT,
+        [TOOL_CIRCLE]: SHAPE_CIRCLE,
+        [TOOL_LINE]: SHAPE_LINE,
+        [TOOL_TRIANGLE]: SHAPE_TRIANGLE,
+        [TOOL_STAR]: SHAPE_STAR,
+        [TOOL_DIAMOND]: SHAPE_DIAMOND,
+      };
       const previewOp = buildOp({
         type:   OP_SHAPE,
         shape:  shapeTypeMap[tool.activeTool],
         x:      Math.min(sx, x),
         y:      Math.min(sy, y),
-        width:  Math.abs(x - sx),
-        height: Math.abs(y - sy),
+        width:  x - sx,
+        height: y - sy,
         filled: tool.filled,
       });
       renderOperation(liveCtx, previewOp);
@@ -161,7 +173,7 @@ export function useDrawing({ committedCanvasRef, liveCanvasRef }) {
 
     if (tool.activeTool === TOOL_PEN) {
       if (currentPoints.current.length === 0) return;
-      op = buildOp({ type: OP_STROKE, points: currentPoints.current });
+      op = buildOp({ type: OP_STROKE, brushStyle: tool.brushStyle, points: currentPoints.current });
     } else if (tool.activeTool === TOOL_ERASER) {
       if (currentPoints.current.length === 0) return;
       op = buildOp({ type: OP_ERASE, points: currentPoints.current });
@@ -170,14 +182,21 @@ export function useDrawing({ committedCanvasRef, liveCanvasRef }) {
       const sy = shapeStart.current.y;
       // Ignore tiny accidental clicks (< 5px)
       if (Math.abs(x - sx) < 5 && Math.abs(y - sy) < 5) return;
-      const shapeTypeMap = { [TOOL_RECT]: SHAPE_RECT, [TOOL_CIRCLE]: SHAPE_CIRCLE, [TOOL_LINE]: SHAPE_LINE };
+      const shapeTypeMap = {
+        [TOOL_RECT]: SHAPE_RECT,
+        [TOOL_CIRCLE]: SHAPE_CIRCLE,
+        [TOOL_LINE]: SHAPE_LINE,
+        [TOOL_TRIANGLE]: SHAPE_TRIANGLE,
+        [TOOL_STAR]: SHAPE_STAR,
+        [TOOL_DIAMOND]: SHAPE_DIAMOND,
+      };
       op = buildOp({
         type:   OP_SHAPE,
         shape:  shapeTypeMap[tool.activeTool],
         x:      Math.min(sx, x),
         y:      Math.min(sy, y),
-        width:  Math.abs(x - sx),
-        height: Math.abs(y - sy),
+        width:  x - sx,
+        height: y - sy,
         filled: tool.filled,
       });
     }

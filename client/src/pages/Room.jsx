@@ -11,6 +11,7 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { nanoid } from 'nanoid';
+import { TOOL_PEN, TOOL_ERASER, TOOL_RECT, TOOL_CIRCLE, TOOL_LINE, TOOL_TRIANGLE, TOOL_STAR, TOOL_DIAMOND, TOOL_TEXT } from '../lib/operationTypes.js';
 import { useSocket }   from '../hooks/useSocket.js';
 import { useUndoRedo } from '../hooks/useUndoRedo.js';
 import { useRoomStore } from '../store/roomStore.js';

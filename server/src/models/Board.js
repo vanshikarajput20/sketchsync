@@ -78,4 +78,33 @@ BoardSchema.statics.upsertBoard = async function (roomId, operations) {
   );
 };
 
-export const Board = mongoose.model('Board', BoardSchema);
+const realBoard = mongoose.model('Board', BoardSchema);
+
+const mockBoards = new Map();
+const mockBoardModel = {
+  findOne(query, projection) {
+    const roomId = query.roomId;
+    return {
+      async lean() {
+        const board = mockBoards.get(roomId);
+        if (!board) return null;
+        if (projection && projection.operationCount) {
+          return { roomId, operationCount: board.operationCount };
+        }
+        return board;
+      }
+    };
+  },
+  async upsertBoard(roomId, operations) {
+    const board = {
+      roomId,
+      operations: [...operations],
+      operationCount: operations.length,
+      savedAt: new Date()
+    };
+    mockBoards.set(roomId, board);
+    return board;
+  }
+};
+
+export const Board = process.env.MOCK_DB === 'true' ? mockBoardModel : realBoard;

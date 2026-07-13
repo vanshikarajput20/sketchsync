@@ -17,7 +17,7 @@
  */
 
 import { create } from 'zustand';
-import { TOOL_PEN } from '../lib/operationTypes.js';
+import { TOOL_PEN, BRUSH_SOLID } from '../lib/operationTypes.js';
 
 /**
  * @typedef {Object} ToolState
@@ -27,6 +27,7 @@ import { TOOL_PEN } from '../lib/operationTypes.js';
  * @property {number} opacity     - 0.0 – 1.0
  * @property {boolean} filled     - For shapes: fill vs outline
  * @property {number} fontSize    - For text tool
+ * @property {string} brushStyle  - 'solid' | 'marker' | 'brush' | 'airbrush'
  */
 
 export const useRoomStore = create((set, get) => ({
@@ -65,6 +66,7 @@ export const useRoomStore = create((set, get) => ({
     opacity:    1.0,
     filled:     false,
     fontSize:   18,
+    brushStyle: BRUSH_SOLID,
   },
 
   // ── Connection state ───────────────────────────────────────────────────────

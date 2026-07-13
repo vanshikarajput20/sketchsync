@@ -142,31 +142,79 @@
   pointer-events: none;
 }
 
-/* Width buttons */
-.widthBtn {
-  width: 32px;
-  height: 32px;
+/* Size select and brush style select dropdowns */
+.sizeSelect,
+.brushSelect {
+  background: var(--color-surface-3);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
-  background: transparent;
-  border: 1px solid transparent;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  padding: 4px 8px;
+  font-size: 13px;
+  font-weight: 500;
+  outline: none;
+  cursor: pointer;
   transition: all var(--transition-fast);
 }
 
-.widthBtn:hover {
-  background: var(--color-surface-3);
+.sizeSelect:hover,
+.brushSelect:hover {
+  border-color: var(--color-border-strong);
+  background: var(--color-surface-2);
 }
 
-.widthBtn.active {
-  background: var(--color-surface-3);
+.sizeSelect:focus,
+.brushSelect:focus {
   border-color: var(--color-accent);
 }
 
-.widthDot {
-  border-radius: 50%;
-  background: var(--color-text);
-  min-width: 6px;
-  min-height: 6px;
+.sizeLabel {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+  margin-right: 4px;
+}
+
+/* ── Interactive CSS Tooltips ────────────────────────────────── */
+.toolBtn,
+.actionBtn,
+.customColorLabel {
+  position: relative;
+}
+
+.toolBtn::after,
+.actionBtn::after,
+.customColorLabel::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 135%;
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  
+  /* Styling */
+  background: rgba(15, 17, 23, 0.95);
+  color: var(--color-text);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border-strong);
+  box-shadow: var(--shadow-md);
+  white-space: nowrap;
+  
+  /* Animations */
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity var(--transition-fast), transform var(--transition-fast);
+  pointer-events: none;
+  z-index: 1000;
+}
+
+.toolBtn:hover::after,
+.actionBtn:hover::after,
+.customColorLabel:hover::after {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
 }

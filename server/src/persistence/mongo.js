@@ -12,6 +12,11 @@ import mongoose from 'mongoose';
  * Resolves when the connection is established.
  */
 export async function connectMongo() {
+  if (process.env.MOCK_DB === 'true') {
+    console.log('ℹ️  [Mock DB] MongoDB in-memory mode enabled');
+    return;
+  }
+
   const uri = process.env.MONGO_URI || 'mongodb://localhost:27017/sketchsync';
 
   // Mongoose 8+ uses the native driver's connection pool by default.
@@ -28,5 +33,6 @@ export async function connectMongo() {
  * Call this in tests or on SIGTERM.
  */
 export async function closeMongo() {
+  if (process.env.MOCK_DB === 'true') return;
   await mongoose.disconnect();
 }

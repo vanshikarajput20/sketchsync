@@ -34,6 +34,7 @@ export function WhiteboardCanvas({ committedCanvasRef: externalRef } = {}) {
   // Prefer the externally-supplied ref (for export button access), else use internal
   const committedRef = externalRef || internalRef;
   const liveRef      = useRef(null);
+  const cursorRef    = useRef(null);
   const textInputRef = useRef(null);
 
   const operations = useRoomStore((s) => s.operations);
@@ -82,28 +83,19 @@ export function WhiteboardCanvas({ committedCanvasRef: externalRef } = {}) {
     }
   }, [operations]);
 
-  // ── Render remote cursors on live layer ───────────────────────────────────
+  // ── Render remote cursors on cursor layer ───────────────────────────────────
   useEffect(() => {
-    const liveCtx = liveRef.current?.getContext('2d');
-    const canvas  = liveRef.current;
-    if (!liveCtx || !canvas) return;
+    const cursorCtx = cursorRef.current?.getContext('2d');
+    const canvas  = cursorRef.current;
+    if (!cursorCtx || !canvas) return;
 
-    // Clear the cursor layer (but not the in-progress stroke — that's handled
-    // by useDrawing, which clears only when drawing). We use requestAnimationFrame
-    // to batch cursor draws and avoid fighting with useDrawing's clearLive calls.
     const rafId = requestAnimationFrame(() => {
-      // Only clear the area used by cursors (overlay) — don't clear the whole live canvas
-      // We do a full clear here because cursors can be anywhere.
-      // In-progress strokes are redrawn by useDrawing after the clear.
-      // This is safe because cursors and strokes are mutually exclusive:
-      // while drawing, cursor updates for OTHER users still fire,
-      // but we accept this minor flicker trade-off for simplicity.
-      liveCtx.clearRect(0, 0, canvas.width, canvas.height);
+      cursorCtx.clearRect(0, 0, canvas.width, canvas.height);
 
       cursors.forEach((pos, uid) => {
         const user = users.get(uid);
         if (!user) return;
-        drawRemoteCursor(liveCtx, pos.x, pos.y, user.color, user.displayName);
+        drawRemoteCursor(cursorCtx, pos.x, pos.y, user.color, user.displayName);
       });
     });
 
@@ -158,7 +150,7 @@ export function WhiteboardCanvas({ committedCanvasRef: externalRef } = {}) {
         aria-label="Whiteboard drawing surface"
       />
 
-      {/* Live layer — in-progress preview + remote cursors */}
+      {/* Live layer — in-progress preview */}
       <canvas
         ref={liveRef}
         className={styles.liveCanvas}
@@ -170,6 +162,15 @@ export function WhiteboardCanvas({ committedCanvasRef: externalRef } = {}) {
         onPointerUp={onPointerUp}
         onPointerLeave={onPointerUp}
         onClick={handleCanvasClick}
+        aria-hidden="true"
+      />
+
+      {/* Cursor layer — remote cursors */}
+      <canvas
+        ref={cursorRef}
+        className={styles.cursorCanvas}
+        width={CANVAS_WIDTH}
+        height={CANVAS_HEIGHT}
         aria-hidden="true"
       />
 
