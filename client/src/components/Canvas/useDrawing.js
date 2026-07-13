@@ -24,7 +24,7 @@ import {
   OP_STROKE, OP_ERASE, OP_SHAPE, OP_TEXT,
   SHAPE_RECT, SHAPE_CIRCLE, SHAPE_LINE, SHAPE_TRIANGLE, SHAPE_STAR, SHAPE_DIAMOND,
 } from '../../lib/operationTypes.js';
-import { renderOperation } from '../../lib/renderOperation.js';
+import { renderOperation, renderSegment } from '../../lib/renderOperation.js';
 
 const CURSOR_THROTTLE_MS = 50; // 20 events/sec
 
@@ -99,6 +99,7 @@ export function useDrawing({ committedCanvasRef, liveCanvasRef }) {
     const { x, y } = getCanvasPos(e);
 
     if (tool.activeTool === TOOL_PEN || tool.activeTool === TOOL_ERASER) {
+      clearLive();
       currentPoints.current = [[x, y]];
     } else if (
       tool.activeTool === TOOL_RECT ||
@@ -113,7 +114,7 @@ export function useDrawing({ committedCanvasRef, liveCanvasRef }) {
       // Text tool: show a native input at the canvas position
       // handled separately by the text input overlay
     }
-  }, [roomId, tool, getCanvasPos]);
+  }, [roomId, tool, getCanvasPos, clearLive]);
 
   // ── Pointer move ──────────────────────────────────────────────────────────
   const onPointerMove = useCallback((e) => {
@@ -125,20 +126,56 @@ export function useDrawing({ committedCanvasRef, liveCanvasRef }) {
 
     const liveCtx = getLiveCtx();
     if (!liveCtx) return;
-    clearLive();
 
-    if (tool.activeTool === TOOL_PEN || tool.activeTool === TOOL_ERASER) {
+    if (tool.activeTool === TOOL_PEN) {
       currentPoints.current.push([x, y]);
+      const p1 = currentPoints.current[currentPoints.current.length - 2];
+      const p2 = currentPoints.current[currentPoints.current.length - 1];
+      if (p1 && p2) {
+        const tempOp = {
+          lineWidth:  tool.lineWidth,
+          color:      tool.color,
+          opacity:    tool.opacity,
+          brushStyle: tool.brushStyle,
+        };
+        renderSegment(liveCtx, tempOp, p1, p2, currentPoints.current.length);
+      }
+    } else if (tool.activeTool === TOOL_ERASER) {
+      currentPoints.current.push([x, y]);
+      clearLive();
 
-      // Preview on live layer
-      const previewOp = buildOp({
-        type:       tool.activeTool === TOOL_ERASER ? OP_ERASE : OP_STROKE,
-        brushStyle: tool.brushStyle,
-        points:     currentPoints.current,
-      });
-      renderOperation(liveCtx, previewOp);
+      // 1. Draw segment directly on committed canvas for instant visual feedback
+      const committedCtx = committedCanvasRef.current?.getContext('2d');
+      if (committedCtx) {
+        const p1 = currentPoints.current[currentPoints.current.length - 2];
+        const p2 = currentPoints.current[currentPoints.current.length - 1];
+        if (p1 && p2) {
+          committedCtx.save();
+          committedCtx.globalCompositeOperation = 'destination-out';
+          committedCtx.strokeStyle = 'rgba(0,0,0,1)';
+          committedCtx.lineWidth = tool.lineWidth * 4;
+          committedCtx.lineCap = 'round';
+          committedCtx.lineJoin = 'round';
+          committedCtx.beginPath();
+          committedCtx.moveTo(p1[0], p1[1]);
+          committedCtx.lineTo(p2[0], p2[1]);
+          committedCtx.stroke();
+          committedCtx.restore();
+        }
+      }
+
+      // 2. Draw circular dashed eraser tip outline on live canvas
+      liveCtx.save();
+      liveCtx.strokeStyle = 'rgba(100, 116, 139, 0.85)';
+      liveCtx.lineWidth = 1.5;
+      liveCtx.setLineDash([3, 3]);
+      liveCtx.beginPath();
+      liveCtx.arc(x, y, (tool.lineWidth * 4) / 2, 0, Math.PI * 2);
+      liveCtx.stroke();
+      liveCtx.restore();
     } else {
-      // Shape preview
+      // Shape preview: clears live canvas first
+      clearLive();
       const sx = shapeStart.current.x;
       const sy = shapeStart.current.y;
       const shapeTypeMap = {

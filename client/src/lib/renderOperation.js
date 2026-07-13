@@ -34,6 +34,123 @@ export function renderOperation(ctx, op) {
   ctx.restore();
 }
 
+/**
+ * Renders a single path segment from p1 to p2 using the active brush type.
+ * Used for high-performance 120 FPS drawing without re-clearing and redrawing everything.
+ */
+export function renderSegment(ctx, op, p1, p2, index) {
+  ctx.save();
+  ctx.globalAlpha = op.opacity ?? 1.0;
+  ctx.lineWidth   = op.lineWidth ?? 2;
+  ctx.lineCap     = 'round';
+  ctx.lineJoin    = 'round';
+  ctx.strokeStyle = op.color;
+  ctx.fillStyle   = op.color;
+
+  const brush = op.brushStyle || BRUSH_SOLID;
+
+  if (brush === BRUSH_HIGHLIGHTER) {
+    ctx.lineCap = 'square';
+    ctx.lineJoin = 'miter';
+    ctx.globalAlpha = (op.opacity ?? 1.0) * 0.4;
+    ctx.lineWidth = op.lineWidth * 2.2;
+    ctx.beginPath();
+    ctx.moveTo(p1[0], p1[1]);
+    ctx.lineTo(p2[0], p2[1]);
+    ctx.stroke();
+  } else if (brush === BRUSH_DASHED) {
+    ctx.setLineDash([op.lineWidth * 2.5, op.lineWidth * 2]);
+    ctx.beginPath();
+    ctx.moveTo(p1[0], p1[1]);
+    ctx.lineTo(p2[0], p2[1]);
+    ctx.stroke();
+  } else if (brush === BRUSH_DOTTED) {
+    ctx.setLineDash([1, op.lineWidth * 2]);
+    ctx.beginPath();
+    ctx.moveTo(p1[0], p1[1]);
+    ctx.lineTo(p2[0], p2[1]);
+    ctx.stroke();
+  } else if (brush === BRUSH_CALLIGRAPHY) {
+    const nib = op.lineWidth * 0.7;
+    ctx.beginPath();
+    ctx.moveTo(p1[0] - nib, p1[1] - nib);
+    ctx.lineTo(p1[0] + nib, p1[1] + nib);
+    ctx.lineTo(p2[0] + nib, p2[1] + nib);
+    ctx.lineTo(p2[0] - nib, p2[1] - nib);
+    ctx.closePath();
+    ctx.fill();
+  } else if (brush === BRUSH_MARKER) {
+    ctx.globalAlpha = (op.opacity ?? 1.0) * 0.8;
+    const targetW = op.lineWidth + (Math.random() - 0.5) * 1.5;
+    ctx.lineWidth = Math.max(1, targetW);
+    ctx.beginPath();
+    ctx.moveTo(p1[0], p1[1]);
+    ctx.lineTo(p2[0], p2[1]);
+    ctx.stroke();
+  } else if (brush === BRUSH_BRUSH) {
+    const dist = Math.hypot(p2[0] - p1[0], p2[1] - p1[1]);
+    const speed = dist / Math.max(1, op.lineWidth * 0.5);
+    const multiplier = Math.max(0.2, Math.min(1.8, 1.4 - speed * 0.35));
+    ctx.lineWidth = op.lineWidth * multiplier;
+    ctx.beginPath();
+    ctx.moveTo(p1[0], p1[1]);
+    ctx.lineTo(p2[0], p2[1]);
+    ctx.stroke();
+  } else if (brush === BRUSH_NEON) {
+    // Glow shadow
+    ctx.save();
+    ctx.shadowBlur = op.lineWidth * 2.2;
+    ctx.shadowColor = op.color;
+    ctx.strokeStyle = op.color;
+    ctx.lineWidth = op.lineWidth * 1.2;
+    ctx.beginPath();
+    ctx.moveTo(p1[0], p1[1]);
+    ctx.lineTo(p2[0], p2[1]);
+    ctx.stroke();
+    ctx.restore();
+
+    // Core overlay
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = Math.max(1.5, op.lineWidth * 0.25);
+    ctx.beginPath();
+    ctx.moveTo(p1[0], p1[1]);
+    ctx.lineTo(p2[0], p2[1]);
+    ctx.stroke();
+  } else if (brush === BRUSH_TEXTURED) {
+    const dx = p2[0] - p1[0];
+    const dy = p2[1] - p1[1];
+    const dist = Math.hypot(dx, dy);
+    const steps = Math.ceil(dist / 1.5);
+    for (let s = 0; s <= steps; s++) {
+      const t = s / steps;
+      const cx = p1[0] + dx * t;
+      const cy = p1[1] + dy * t;
+      for (let d = 0; d < 3; d++) {
+        const angle = Math.random() * Math.PI * 2;
+        const r = Math.random() * (op.lineWidth / 1.8);
+        const px = cx + Math.cos(angle) * r;
+        const py = cy + Math.sin(angle) * r;
+        ctx.globalAlpha = Math.random() * 0.85;
+        ctx.fillRect(px, py, 1.2, 1.2);
+      }
+    }
+  } else if (brush === BRUSH_GRADIENT) {
+    const hue = (index * 3.5) % 360;
+    ctx.strokeStyle = `hsl(${hue}, 95%, 60%)`;
+    ctx.beginPath();
+    ctx.moveTo(p1[0], p1[1]);
+    ctx.lineTo(p2[0], p2[1]);
+    ctx.stroke();
+  } else {
+    ctx.beginPath();
+    ctx.moveTo(p1[0], p1[1]);
+    ctx.lineTo(p2[0], p2[1]);
+    ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
 // ── Private renderers ────────────────────────────────────────────────────────
 
 /**
@@ -123,7 +240,7 @@ function renderStroke(ctx, op) {
   } else if (brush === BRUSH_MARKER) {
     // Marker: semi-transparent, jittered width (rough paper bleed)
     ctx.lineCap = 'round';
-    ctx.globalAlpha = (op.opacity ?? 1.0) * 0.5;
+    ctx.globalAlpha = (op.opacity ?? 1.0) * 0.8; // Increased Marker opacity to 0.8
     let prevW = op.lineWidth;
     for (let i = 1; i < pts.length; i++) {
       const targetW = op.lineWidth + (Math.random() - 0.5) * 1.5;
@@ -204,7 +321,7 @@ function renderStroke(ctx, op) {
           const r = Math.random() * (op.lineWidth / 1.8);
           const px = cx + Math.cos(angle) * r;
           const py = cy + Math.sin(angle) * r;
-          ctx.globalAlpha = Math.random() * 0.45;
+          ctx.globalAlpha = Math.random() * 0.85; // Increased Chalk scatter opacity to 0.85
           ctx.fillRect(px, py, 1.2, 1.2);
         }
       }
