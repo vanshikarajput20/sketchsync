@@ -1,0 +1,18 @@
+# railway.toml — SketchSync backend deployment config
+# https://docs.railway.app/deploy/config-as-code
+
+[build]
+# Railway auto-detects Node.js; this is explicit for clarity
+builder = "nixpacks"
+
+[deploy]
+# Railway sets PORT automatically — server/index.js reads process.env.PORT
+startCommand = "npm start"
+healthcheckPath = "/health"
+healthcheckTimeout = 30
+
+# Environment variables are set in the Railway dashboard:
+#   REDIS_URL     — Railway Redis plugin or Upstash (rediss://... for TLS)
+#   MONGO_URI     — MongoDB Atlas free cluster
+#   CORS_ORIGINS  — https://your-app.vercel.app
+#   NODE_ENV      — production

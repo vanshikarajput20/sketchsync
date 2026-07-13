@@ -1,0 +1,49 @@
+/* ExportButton.module.css */
+
+.wrapper {
+  position: relative;
+}
+
+.exportBtn {
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 500;
+  background: var(--color-surface-2);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  transition: all var(--transition-fast);
+}
+
+.exportBtn:hover {
+  background: var(--color-surface-3);
+  border-color: var(--color-border-strong);
+}
+
+.menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+  animation: fadeIn 0.15s both;
+  min-width: 120px;
+  z-index: 200;
+}
+
+.menuItem {
+  display: block;
+  width: 100%;
+  padding: var(--space-2) var(--space-4);
+  font-size: 13px;
+  color: var(--color-text);
+  text-align: left;
+  transition: background var(--transition-fast);
+}
+
+.menuItem:hover {
+  background: var(--color-surface-3);
+}

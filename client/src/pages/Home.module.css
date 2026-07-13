@@ -1,0 +1,193 @@
+/* Home.module.css */
+
+.page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Animated dot grid background */
+.grid {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(109, 107, 245, 0.15) 1px, transparent 1px);
+  background-size: 32px 32px;
+  animation: subtleShift 20s linear infinite;
+}
+
+@keyframes subtleShift {
+  0%   { background-position: 0 0; }
+  100% { background-position: 32px 32px; }
+}
+
+.card {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 420px;
+  padding: var(--space-10) var(--space-8);
+  background: rgba(26, 29, 39, 0.9);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg), 0 0 80px rgba(109, 107, 245, 0.1);
+  animation: fadeIn 0.5s both;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-4);
+}
+
+.logo {
+  font-size: 48px;
+  text-align: center;
+  line-height: 1;
+  filter: drop-shadow(0 0 20px rgba(109, 107, 245, 0.5));
+}
+
+.title {
+  font-size: 32px;
+  font-weight: 700;
+  text-align: center;
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, #ffffff 0%, #a5b4fc 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: -var(--space-2);
+}
+
+.subtitle {
+  font-size: 14px;
+  color: var(--color-text-muted);
+  text-align: center;
+  margin-bottom: var(--space-2);
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  letter-spacing: 0.03em;
+}
+
+.input {
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-3);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  font-size: 14px;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  outline: none;
+}
+
+.input::placeholder {
+  color: var(--color-text-faint);
+}
+
+.input:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--color-accent-glow);
+}
+
+.primaryBtn {
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: 15px;
+  font-weight: 600;
+  background: linear-gradient(135deg, var(--color-accent) 0%, #8b5cf6 100%);
+  color: #ffffff;
+  border: none;
+  transition: all var(--transition-normal);
+  box-shadow: 0 4px 16px rgba(109, 107, 245, 0.4);
+  letter-spacing: 0.01em;
+}
+
+.primaryBtn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 24px rgba(109, 107, 245, 0.5);
+}
+
+.primaryBtn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.primaryBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.separator {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--color-text-faint);
+  font-size: 12px;
+}
+
+.separator::before,
+.separator::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--color-border);
+}
+
+.joinForm {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.joinForm .input {
+  flex: 1;
+}
+
+.secondaryBtn {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 600;
+  background: var(--color-surface-3);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  white-space: nowrap;
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.secondaryBtn:hover {
+  background: var(--color-accent);
+  color: #ffffff;
+  border-color: transparent;
+  box-shadow: var(--shadow-glow);
+}
+
+.error {
+  font-size: 13px;
+  color: var(--color-danger);
+  text-align: center;
+  padding: var(--space-2) var(--space-3);
+  background: rgba(239, 68, 68, 0.1);
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.hint {
+  font-size: 12px;
+  color: var(--color-text-faint);
+  text-align: center;
+}

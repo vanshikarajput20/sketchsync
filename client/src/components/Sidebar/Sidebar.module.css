@@ -1,0 +1,137 @@
+/* Sidebar.module.css */
+
+.userList,
+.roomInfo {
+  padding: var(--space-4);
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-3);
+}
+
+.sectionTitle {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-faint);
+}
+
+.badge {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+}
+
+.online {
+  background: rgba(34, 197, 94, 0.15);
+  color: var(--color-success);
+}
+
+.offline {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--color-danger);
+}
+
+/* User list */
+.users {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.userItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  transition: background var(--transition-fast);
+  animation: slideInLeft 0.2s both;
+}
+
+.userItem:hover {
+  background: var(--color-surface-3);
+}
+
+.colorDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 6px currentColor;
+}
+
+.userName {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.youLabel {
+  color: var(--color-text-muted);
+  font-weight: 400;
+}
+
+/* Room info */
+.roomCode {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  background: var(--color-surface-3);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-3);
+}
+
+.roomCodeLabel {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+}
+
+.code {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--color-accent);
+  letter-spacing: 0.05em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.copyBtn {
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 500;
+  background: var(--color-surface-3);
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
+  transition: all var(--transition-fast);
+  text-align: center;
+}
+
+.copyBtn:hover {
+  background: var(--color-accent);
+  color: #ffffff;
+  border-color: transparent;
+  box-shadow: var(--shadow-glow);
+}
+
+.copyBtn.copied {
+  background: rgba(34, 197, 94, 0.15);
+  color: var(--color-success);
+  border-color: rgba(34, 197, 94, 0.3);
+}

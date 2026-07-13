@@ -1,0 +1,16 @@
+{
+  "name": "sketchsync-tests",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "test:integration": "vitest run tests/integration"
+  },
+  "devDependencies": {
+    "socket.io": "^4.7.5",
+    "socket.io-client": "^4.7.5",
+    "vitest": "^1.6.0"
+  }
+}

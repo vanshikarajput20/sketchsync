@@ -1,0 +1,52 @@
+/* WhiteboardCanvas.module.css */
+
+.canvasContainer {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+/* Both canvases are positioned absolutely and fill the container */
+.committedCanvas,
+.liveCanvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* The committed canvas sits below */
+.committedCanvas {
+  z-index: 1;
+}
+
+/* The live canvas sits above and captures pointer events */
+.liveCanvas {
+  z-index: 2;
+  touch-action: none; /* prevents scroll interference on mobile */
+}
+
+/* Text tool input overlay */
+.textInput {
+  position: absolute;
+  z-index: 10;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid var(--color-accent);
+  outline: none;
+  font-family: 'Inter', sans-serif;
+  font-size: 18px;
+  color: #1a1a2e;
+  min-width: 120px;
+  padding: 4px 0;
+  caret-color: var(--color-accent);
+}
+
+.textInput::placeholder {
+  color: rgba(0, 0, 0, 0.3);
+  font-style: italic;
+}

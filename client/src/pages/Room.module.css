@@ -1,0 +1,52 @@
+/* Room.module.css */
+
+.layout {
+  display: grid;
+  grid-template-columns: var(--sidebar-width) 1fr;
+  grid-template-rows: 100vh;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ── Sidebar ──────────────────────────────────────────────────────────────── */
+.sidebar {
+  background: var(--color-surface);
+  border-right: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: slideInLeft 0.3s both;
+}
+
+.sidebarHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4);
+  flex-shrink: 0;
+}
+
+.appName {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--color-text);
+}
+
+.sidebarDivider {
+  height: 1px;
+  background: var(--color-border);
+  margin: 0;
+  flex-shrink: 0;
+}
+
+/* ── Canvas area ──────────────────────────────────────────────────────────── */
+.canvasArea {
+  position: relative;
+  overflow: hidden;
+  background: #f8f8f8;
+  /* Subtle grid pattern behind the white canvas */
+  background-image:
+    radial-gradient(circle, rgba(0,0,0,0.06) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
