@@ -16,11 +16,12 @@ A portfolio-grade, full-stack real-time collaborative whiteboard demonstrating W
 | **State management** | Zustand store + operation-replay for consistent multi-client state |
 | **Conflict-free sync** | Append-only op log with ID-keyed undo — concurrent strokes never conflict |
 | **Canvas API** | Dual-layer canvas, quadratic Bézier stroke smoothing, `destination-out` erasing |
-| **Persistence** | Redis for hot state (active rooms, 24 h TTL), MongoDB for durable board saves |
+| **Persistence** | Redis for hot state, MongoDB for durable save. Fallback to in-memory mocks when services are offline |
 | **Reconnection** | Stateless re-join: server sends full op array on every `room:join` |
 | **Performance** | Token-bucket cursor throttle (20 Hz), incremental op rendering, O(1) new-op render |
-| **Testing** | 40 + unit tests on sync/room logic + multi-socket integration tests with in-memory stubs |
+| **Testing** | 50+ unit/integration tests covering sync, room, rate-limiting, and multi-socket behavior |
 | **Clean architecture** | Hard separation: socket handlers / room model / persistence / REST API |
+| **Zero-Config Dev** | Fallback mode dynamically detects service failures for database-free execution |
 
 ---
 
@@ -67,7 +68,7 @@ Browser B ◄──────────────────────�
 
 ### Undo / Redo
 
-- **Per-user**: each client tracks its own op-ID stack in `useUndoRedo.js`.
+- **Per-user & Synchronized**: local history is tracked inside the global Zustand room store ([roomStore.js](file:///Users/vanshika/GITT/sketchsync/client/src/store/roomStore.js)), accessed via `useUndoRedo.js`. This guarantees that canvas drawing inputs, keyboard shortcuts (Ctrl+Z), and toolbar buttons remain perfectly synchronized and reactive.
 - Undo emits `draw:undo { opId }` → server removes op from Redis, broadcasts to **all** clients.
 - All clients **replay remaining ops** to reconstruct the canvas — O(n), acceptable for < 5 k ops/session.
 - Redo re-appends the op at the end of the log.
@@ -168,8 +169,11 @@ sketchsync/
 ### Prerequisites
 
 - **Node.js ≥ 18**
-- **Redis** — local (`brew install redis && redis-server`) or [Upstash free tier](https://upstash.com)
-- **MongoDB** — local (`brew install mongodb-community && mongod`) or [Atlas free tier](https://www.mongodb.com/atlas)
+- **Redis** (Optional) — local (`brew install redis && redis-server`) or [Upstash free tier](https://upstash.com)
+- **MongoDB** (Optional) — local (`brew install mongodb-community && mongod`) or [Atlas free tier](https://www.mongodb.com/atlas)
+
+> [!NOTE]
+> **Zero-Config Development**: If local Redis or MongoDB services are not running, SketchSync will automatically fall back to fully functional in-memory mocks. No database setup or configuration is required to run and edit the project locally.
 
 ### 1 — Clone and install
 
