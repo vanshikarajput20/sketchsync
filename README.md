@@ -2,17 +2,13 @@
 
 **Draw together, live. No signup required.**
 
-A full-stack, portfolio-grade real-time collaborative whiteboard demonstrating WebSocket-based multi-user synchronization, append-only operation logging, conflict-free per-user undo/redo, and a polished design-system UI.
+A full-stack, real-time collaborative whiteboard demonstrating WebSocket-based multi-user synchronization, append-only operation logging, conflict-free per-user undo/redo, and a polished design-system UI.
 
 ---
 
 ## Demo
 
-![SketchSync Demo](./assets/demo.gif)
-
 Open two browser windows at the same URL, create a room in one, and join from the other — changes appear in under ~30ms on localhost.
-
-*(Demo GIF here)*
 
 ---
 
@@ -56,4 +52,49 @@ CRDTs earn their complexity when genuine semantic conflicts exist — such as tw
 
 ---
 
-## Folder Structure
+## Getting Started
+
+**Prerequisites:** Node.js ≥ 18. Redis and MongoDB are optional — the app automatically falls back to in-memory mocks if either is unavailable.
+
+```bash
+git clone https://github.com/vanshikarajput20/sketchsync.git
+cd sketchsync
+npm run install:all
+```
+
+Configure your environment:
+```bash
+cd server
+cp .env.example .env
+```
+
+Run the application:
+```bash
+# Terminal 1
+cd server && npm run dev
+
+# Terminal 2
+cd client && npm run dev
+```
+
+Open `http://localhost:5173` in two browser tabs to test real-time sync.
+
+Run the test suite:
+```bash
+cd tests && npm test
+```
+
+---
+
+## Design Trade-offs & Future Improvements
+
+- **Undo performance** — currently an O(n) rewrite due to Redis List constraints; a tombstone-based sorted set would reduce this to O(1)
+- **Redis Streams** over Lists, to support native sequence numbers for efficient reconnects
+- **Horizontal scaling** via a Redis-backed Socket.IO adapter, enabling multi-instance deployment
+- **Canvas chunking**, to limit undo replay cost on very large boards
+
+---
+
+## Credits
+
+Built and designed by **Vanshika**
