@@ -8,26 +8,29 @@ import {
 } from '../../lib/operationTypes.js';
 import styles from './Toolbar.module.css';
 
-const PRIMARY_TOOLS = [TOOL_PEN, TOOL_ERASER, 'shape', TOOL_TEXT];
-
-const SHAPES = [TOOL_RECT, TOOL_CIRCLE, TOOL_LINE, TOOL_TRIANGLE, TOOL_STAR, TOOL_DIAMOND];
-
-const SHAPE_ICONS = {
+// Tool icons (inline SVG paths for zero dependency)
+const TOOL_ICONS = {
+  pen:      '✏️',
+  eraser:   '⬜',
   rect:     '▭',
   circle:   '○',
   line:     '╱',
   triangle: '▲',
   star:     '★',
   diamond:  '◆',
+  text:     'T',
 };
 
-const SHAPE_LABELS = {
-  rect:     'Rectangle',
-  circle:   'Circle',
-  line:     'Line',
-  triangle: 'Triangle',
-  star:     'Star',
-  diamond:  'Diamond',
+const TOOL_LABELS = {
+  pen:      'Pen (P)',
+  eraser:   'Eraser (E)',
+  rect:     'Rectangle (R)',
+  circle:   'Circle (C)',
+  line:     'Line (L)',
+  triangle: 'Triangle (H)',
+  star:     'Star (S)',
+  diamond:  'Diamond (D)',
+  text:     'Text (T)',
 };
 
 const PRESET_COLORS = [
@@ -36,114 +39,121 @@ const PRESET_COLORS = [
   '#ec4899', '#ffffff',
 ];
 
+const PRESET_SIZES = [2, 6, 12, 24, 48, 80];
+const SHAPES = [TOOL_RECT, TOOL_CIRCLE, TOOL_LINE, TOOL_TRIANGLE, TOOL_STAR, TOOL_DIAMOND];
+
 export function Toolbar() {
   const tool     = useRoomStore((s) => s.tool);
   const setTool  = useRoomStore((s) => s.setTool);
   const roomId   = useRoomStore((s) => s.roomId);
   const userId   = useRoomStore((s) => s.userId);
   const socket   = useSocket();
-  const { undo, redo } = useUndoRedo();
+  const { undo, redo, canUndo, canRedo } = useUndoRedo();
 
-  const [sizeOpen, setSizeOpen] = useState(false);
-  const sizeRef = useRef(null);
-  const lastShape = useRef(TOOL_RECT);
+  const [selectedShape, setSelectedShape] = useState(TOOL_RECT);
+  const [showShapeDropdown, setShowShapeDropdown] = useState(false);
+  const shapeGroupRef = useRef(null);
 
-  // Close size dropdown on clicking outside
   useEffect(() => {
-    const clickOutside = (e) => {
-      if (sizeRef.current && !sizeRef.current.contains(e.target)) {
-        setSizeOpen(false);
+    const handleClickOutside = (e) => {
+      if (shapeGroupRef.current && !shapeGroupRef.current.contains(e.target)) {
+        setShowShapeDropdown(false);
       }
     };
-    document.addEventListener('mousedown', clickOutside);
-    return () => document.removeEventListener('mousedown', clickOutside);
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-
-  // Update last active shape when selected
-  const isShapeActive = SHAPES.includes(tool.activeTool);
-  if (isShapeActive && tool.activeTool !== lastShape.current) {
-    lastShape.current = tool.activeTool;
-  }
 
   const handleClear = () => {
     if (!window.confirm('Clear the entire board? This cannot be undone.')) return;
     socket.emit('board:clear', { roomId, userId });
   };
 
+  const isShapeActive = SHAPES.includes(tool.activeTool);
+
   return (
     <div className={styles.toolbar} role="toolbar" aria-label="Drawing tools">
-      {/* ── Primary Drawing tools ─────────────────────────────────── */}
+      {/* ── Drawing tools ────────────────────────────────────────── */}
       <div className={styles.group}>
-        {PRIMARY_TOOLS.map((t) => {
-          let isActive = false;
-          let onClick = () => setTool({ activeTool: t });
-          let icon = '';
-          let label = '';
-          let id = `tool-${t}`;
+        {/* Pen */}
+        <button
+          id={`tool-${TOOL_PEN}`}
+          className={`${styles.toolBtn} ${tool.activeTool === TOOL_PEN ? styles.active : ''}`}
+          onClick={() => setTool({ activeTool: TOOL_PEN })}
+          data-tooltip={TOOL_LABELS[TOOL_PEN]}
+          aria-label={TOOL_LABELS[TOOL_PEN]}
+          aria-pressed={tool.activeTool === TOOL_PEN}
+        >
+          {TOOL_ICONS[TOOL_PEN]}
+        </button>
 
-          if (t === 'shape') {
-            isActive = isShapeActive;
-            icon = SHAPE_ICONS[lastShape.current];
-            label = `Shapes (${SHAPE_LABELS[lastShape.current]})`;
-            onClick = () => setTool({ activeTool: lastShape.current });
-            id = `tool-shape`;
-          } else {
-            isActive = tool.activeTool === t;
-            if (t === TOOL_PEN) {
-              icon = '✏️';
-              label = 'Pen (P)';
-            } else if (t === TOOL_ERASER) {
-              icon = '⬜';
-              label = 'Eraser (E)';
-            } else if (t === TOOL_TEXT) {
-              icon = 'T';
-              label = 'Text (T)';
-            }
-          }
+        {/* Eraser */}
+        <button
+          id={`tool-${TOOL_ERASER}`}
+          className={`${styles.toolBtn} ${tool.activeTool === TOOL_ERASER ? styles.active : ''}`}
+          onClick={() => setTool({ activeTool: TOOL_ERASER })}
+          data-tooltip={TOOL_LABELS[TOOL_ERASER]}
+          aria-label={TOOL_LABELS[TOOL_ERASER]}
+          aria-pressed={tool.activeTool === TOOL_ERASER}
+        >
+          {TOOL_ICONS[TOOL_ERASER]}
+        </button>
 
-          return (
-            <button
-              key={t}
-              id={id}
-              className={`${styles.toolBtn} ${isActive ? styles.active : ''}`}
-              onClick={onClick}
-              data-tooltip={label}
-              aria-label={label}
-              aria-pressed={isActive}
-            >
-              {icon}
-            </button>
-          );
-        })}
+        {/* Grouped Shapes */}
+        <div ref={shapeGroupRef} className={`${styles.shapeGroup} ${isShapeActive ? styles.activeGroup : ''}`}>
+          <button
+            id="tool-shape"
+            className={`${styles.toolBtn} ${isShapeActive ? styles.active : ''}`}
+            onClick={() => setTool({ activeTool: selectedShape })}
+            data-tooltip={`Shape: ${TOOL_LABELS[selectedShape]}`}
+            aria-label={`Shape: ${TOOL_LABELS[selectedShape]}`}
+            aria-pressed={isShapeActive}
+            style={{ borderTopRightRadius: 0, borderBottomRightRadius: 0, border: 'none' }}
+          >
+            {TOOL_ICONS[selectedShape]}
+          </button>
+          <button
+            className={styles.dropdownToggle}
+            onClick={() => setShowShapeDropdown(!showShapeDropdown)}
+            aria-label="Select shape"
+            aria-expanded={showShapeDropdown}
+          >
+            ▾
+          </button>
+          {showShapeDropdown && (
+            <div className={styles.shapeDropdown}>
+              {SHAPES.map((s) => (
+                <button
+                  key={s}
+                  className={`${styles.shapeDropdownBtn} ${tool.activeTool === s ? styles.activeShape : ''}`}
+                  onClick={() => {
+                    setSelectedShape(s);
+                    setTool({ activeTool: s });
+                    setShowShapeDropdown(false);
+                  }}
+                >
+                  <span style={{ fontSize: '16px' }}>{TOOL_ICONS[s]}</span>
+                  <span>{TOOL_LABELS[s].split(' ')[0]}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Text */}
+        <button
+          id={`tool-${TOOL_TEXT}`}
+          className={`${styles.toolBtn} ${tool.activeTool === TOOL_TEXT ? styles.active : ''}`}
+          onClick={() => setTool({ activeTool: TOOL_TEXT })}
+          data-tooltip={TOOL_LABELS[TOOL_TEXT]}
+          aria-label={TOOL_LABELS[TOOL_TEXT]}
+          aria-pressed={tool.activeTool === TOOL_TEXT}
+        >
+          {TOOL_ICONS[TOOL_TEXT]}
+        </button>
       </div>
 
       <div className={styles.divider} />
-
-      {/* ── Shape Sub-Type Dropdown (Conditional) ──────────────────── */}
-      {isShapeActive && (
-        <>
-          <div className={styles.group}>
-            <label htmlFor="select-shape" className="visually-hidden">Choose Shape</label>
-            <select
-              id="select-shape"
-              value={tool.activeTool}
-              onChange={(e) => {
-                lastShape.current = e.target.value;
-                setTool({ activeTool: e.target.value });
-              }}
-              className={styles.brushSelect}
-              aria-label="Choose shape"
-            >
-              {SHAPES.map((sh) => (
-                <option key={sh} value={sh}>
-                  {SHAPE_LABELS[sh]}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className={styles.divider} />
-        </>
-      )}
 
       {/* ── Pen Brush Styles (Conditional) ─────────────────────────── */}
       {tool.activeTool === TOOL_PEN && (
@@ -203,53 +213,28 @@ export function Toolbar() {
 
       <div className={styles.divider} />
 
-      {/* ── Custom Stroke Width (Visual dots preview) ────────────── */}
-      <div className={styles.group} ref={sizeRef}>
-        <div className={styles.customSelect}>
-          <button
-            className={styles.sizeTrigger}
-            onClick={() => setSizeOpen(!sizeOpen)}
-            data-tooltip={`Line width: ${tool.lineWidth}px`}
-            aria-label="Stroke width picker"
-            aria-expanded={sizeOpen}
-          >
-            <div 
-              className={styles.sizePreviewCircle} 
-              style={{ 
-                width: Math.max(2, Math.min(18, tool.lineWidth)), 
-                height: Math.max(2, Math.min(18, tool.lineWidth)) 
-              }} 
-            />
-            <span className={styles.sizeText}>{tool.lineWidth}px</span>
-            <span className={styles.arrow}>▼</span>
-          </button>
-          
-          {sizeOpen && (
-            <div className={styles.sizeMenu}>
-              {[2, 4, 6, 8, 12, 16, 24, 32, 40, 50, 64, 80, 100].map((w) => (
-                <button
-                  key={w}
-                  className={`${styles.sizeOption} ${tool.lineWidth === w ? styles.activeSize : ''}`}
-                  onClick={() => {
-                    setTool({ lineWidth: w });
-                    setSizeOpen(false);
-                  }}
-                  aria-label={`Select ${w} pixels width`}
-                >
-                  <div className={styles.optionCircleWrapper}>
-                    <div 
-                      className={styles.optionCircle} 
-                      style={{ 
-                        width: Math.max(2, Math.min(18, w)), 
-                        height: Math.max(2, Math.min(18, w)) 
-                      }} 
-                    />
-                  </div>
-                  <span className={styles.optionText}>{w}px</span>
-                </button>
-              ))}
-            </div>
-          )}
+      {/* ── Stroke width Dots Grid ────────────────────────────────── */}
+      <div className={styles.group}>
+        <span className={styles.sizeLabel}>Size</span>
+        <div className={styles.sizeGrid}>
+          {PRESET_SIZES.map((w) => (
+            <button
+              key={w}
+              className={`${styles.sizeBtn} ${tool.lineWidth === w ? styles.activeSize : ''}`}
+              onClick={() => setTool({ lineWidth: w })}
+              data-tooltip={`${w}px`}
+              aria-label={`Size ${w}px`}
+              aria-pressed={tool.lineWidth === w}
+            >
+              <span
+                className={styles.sizeDot}
+                style={{
+                  width: `${Math.max(2, Math.min(18, w / 3 + 1))}px`,
+                  height: `${Math.max(2, Math.min(18, w / 3 + 1))}px`,
+                }}
+              />
+            </button>
+          ))}
         </div>
       </div>
 
@@ -276,6 +261,7 @@ export function Toolbar() {
           id="btn-undo"
           className={styles.actionBtn}
           onClick={undo}
+          disabled={!canUndo}
           data-tooltip="Undo (Ctrl+Z)"
           aria-label="Undo"
         >
@@ -285,6 +271,7 @@ export function Toolbar() {
           id="btn-redo"
           className={styles.actionBtn}
           onClick={redo}
+          disabled={!canRedo}
           data-tooltip="Redo (Ctrl+Shift+Z)"
           aria-label="Redo"
         >

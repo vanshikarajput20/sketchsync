@@ -32,28 +32,39 @@ export async function connectRedis() {
 
   const url = process.env.REDIS_URL || 'redis://localhost:6379';
 
-  client = new Redis(url, {
-    // Retry strategy: exponential backoff up to 30 s, then stop retrying
-    retryStrategy(times) {
-      if (times > 10) return null; // stop retrying → ioredis emits an error
-      return Math.min(times * 200, 30_000);
-    },
-    enableReadyCheck: true,
-    maxRetriesPerRequest: 3,
-    // Required for Upstash TLS URLs (rediss://)
-    tls: url.startsWith('rediss://') ? {} : undefined,
-  });
+  try {
+    client = new Redis(url, {
+      // Retry strategy: stop retrying quickly in development if not running
+      retryStrategy(times) {
+        if (times > 3) return null; // stop retrying quickly in dev
+        return Math.min(times * 200, 1000);
+      },
+      enableReadyCheck: true,
+      maxRetriesPerRequest: 3,
+      // Required for Upstash TLS URLs (rediss://)
+      tls: url.startsWith('rediss://') ? {} : undefined,
+    });
 
-  return new Promise((resolve, reject) => {
-    client.once('ready', () => {
-      console.log('✅  Redis connected');
-      resolve();
+    await new Promise((resolve, reject) => {
+      client.once('ready', () => {
+        console.log('✅  Redis connected');
+        resolve();
+      });
+      client.once('error', (err) => {
+        reject(err);
+      });
     });
-    client.once('error', (err) => {
-      console.error('❌  Redis connection error:', err.message);
-      reject(err);
-    });
-  });
+  } catch (err) {
+    console.warn('⚠️  Redis connection failed:', err.message);
+    console.warn('ℹ️  Falling back to in-memory Redis mock...');
+    process.env.MOCK_DB = 'true';
+    if (client) {
+      try {
+        client.disconnect();
+      } catch (_) {}
+      client = null;
+    }
+  }
 }
 
 /**

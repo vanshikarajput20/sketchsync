@@ -107,4 +107,13 @@ const mockBoardModel = {
   }
 };
 
-export const Board = process.env.MOCK_DB === 'true' ? mockBoardModel : realBoard;
+export const Board = {
+  findOne(...args) {
+    const activeModel = process.env.MOCK_DB === 'true' ? mockBoardModel : realBoard;
+    return activeModel.findOne(...args);
+  },
+  async upsertBoard(...args) {
+    const activeModel = process.env.MOCK_DB === 'true' ? mockBoardModel : realBoard;
+    return activeModel.upsertBoard(...args);
+  }
+};

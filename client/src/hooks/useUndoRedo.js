@@ -13,7 +13,7 @@
  * The undo stack is a simple array of op IDs in creation order.
  */
 
-import { useRef, useCallback } from 'react';
+import { useCallback } from 'react';
 import { useSocket } from './useSocket.js';
 import { useRoomStore } from '../store/roomStore.js';
 
@@ -31,14 +31,14 @@ import { useRoomStore } from '../store/roomStore.js';
 export function useUndoRedo() {
   const socket = useSocket();
 
-  /** @type {React.MutableRefObject<string[]>} Stack of op IDs that can be undone */
-  const undoStack = useRef([]);
-
-  /** @type {React.MutableRefObject<string[]>} Stack of op IDs that can be redone */
-  const redoStack = useRef([]);
-
   const roomId = useRoomStore((s) => s.roomId);
   const userId = useRoomStore((s) => s.userId);
+
+  const undoStack = useRoomStore((s) => s.undoStack);
+  const redoStack = useRoomStore((s) => s.redoStack);
+  const pushUndoOpId = useRoomStore((s) => s.pushUndoOpId);
+  const popUndo = useRoomStore((s) => s.popUndo);
+  const popRedo = useRoomStore((s) => s.popRedo);
 
   /**
    * Call this whenever the user creates a new operation.
@@ -47,32 +47,31 @@ export function useUndoRedo() {
    * @param {string} opId
    */
   const pushOpId = useCallback((opId) => {
-    undoStack.current.push(opId);
-    redoStack.current = []; // clear redo history on new action
-  }, []);
+    pushUndoOpId(opId);
+  }, [pushUndoOpId]);
 
   /**
    * Undoes the most recent local operation.
    */
   const undo = useCallback(() => {
-    if (undoStack.current.length === 0) return;
-    const opId = undoStack.current.pop();
-    redoStack.current.push(opId);
-    socket.emit('draw:undo', { roomId, userId, opId });
-  }, [socket, roomId, userId]);
+    const opId = popUndo();
+    if (opId) {
+      socket.emit('draw:undo', { roomId, userId, opId });
+    }
+  }, [socket, roomId, userId, popUndo]);
 
   /**
    * Redoes the most recently undone operation.
    */
   const redo = useCallback(() => {
-    if (redoStack.current.length === 0) return;
-    const opId = redoStack.current.pop();
-    undoStack.current.push(opId);
-    socket.emit('draw:redo', { roomId, userId, opId });
-  }, [socket, roomId, userId]);
+    const opId = popRedo();
+    if (opId) {
+      socket.emit('draw:redo', { roomId, userId, opId });
+    }
+  }, [socket, roomId, userId, popRedo]);
 
-  const canUndo = useCallback(() => undoStack.current.length > 0, []);
-  const canRedo = useCallback(() => redoStack.current.length > 0, []);
+  const canUndo = undoStack.length > 0;
+  const canRedo = redoStack.length > 0;
 
   return { pushOpId, undo, redo, canUndo, canRedo };
 }

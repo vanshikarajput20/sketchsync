@@ -44,6 +44,12 @@ export const useRoomStore = create((set, get) => ({
   /** @type {Set<string>} Op IDs that are currently undone (excluded from replay) */
   undoneOpIds: new Set(),
 
+  /** @type {string[]} Stack of local op IDs that can be undone */
+  undoStack: [],
+
+  /** @type {string[]} Stack of local op IDs that can be redone */
+  redoStack: [],
+
   // ── Presence ───────────────────────────────────────────────────────────────
   /**
    * @type {Map<string, { userId: string, displayName: string, color: string }>}
@@ -88,6 +94,8 @@ export const useRoomStore = create((set, get) => ({
       cursors: new Map(),
       undoneOpIds: new Set(),
       isConnected: true,
+      undoStack: [],
+      redoStack: [],
     }),
 
   /**
@@ -172,6 +180,40 @@ export const useRoomStore = create((set, get) => ({
 
   setConnected: (isConnected) => set({ isConnected }),
 
+  pushUndoOpId: (opId) =>
+    set((state) => ({
+      undoStack: [...state.undoStack, opId],
+      redoStack: [],
+    })),
+
+  popUndo: () => {
+    let popped = null;
+    set((state) => {
+      if (state.undoStack.length === 0) return {};
+      const newStack = [...state.undoStack];
+      popped = newStack.pop();
+      return {
+        undoStack: newStack,
+        redoStack: [...state.redoStack, popped],
+      };
+    });
+    return popped;
+  },
+
+  popRedo: () => {
+    let popped = null;
+    set((state) => {
+      if (state.redoStack.length === 0) return {};
+      const newStack = [...state.redoStack];
+      popped = newStack.pop();
+      return {
+        redoStack: newStack,
+        undoStack: [...state.undoStack, popped],
+      };
+    });
+    return popped;
+  },
+
   /** Resets all room state (called on room leave) */
   reset: () =>
     set({
@@ -179,5 +221,6 @@ export const useRoomStore = create((set, get) => ({
       operations: [], undoneOpIds: new Set(),
       users: new Map(), cursors: new Map(),
       isConnected: false,
+      undoStack: [], redoStack: [],
     }),
 }));

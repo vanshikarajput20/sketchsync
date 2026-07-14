@@ -19,13 +19,18 @@ export async function connectMongo() {
 
   const uri = process.env.MONGO_URI || 'mongodb://localhost:27017/sketchsync';
 
-  // Mongoose 8+ uses the native driver's connection pool by default.
-  // These options avoid deprecation warnings.
-  await mongoose.connect(uri, {
-    serverSelectionTimeoutMS: 5000,
-  });
-
-  console.log('✅  MongoDB connected');
+  try {
+    // Mongoose 8+ uses the native driver's connection pool by default.
+    // These options avoid deprecation warnings.
+    await mongoose.connect(uri, {
+      serverSelectionTimeoutMS: 2000, // short timeout for fast dev fallback
+    });
+    console.log('✅  MongoDB connected');
+  } catch (err) {
+    console.warn('⚠️  MongoDB connection failed:', err.message);
+    console.warn('ℹ️  Falling back to in-memory MongoDB mock...');
+    process.env.MOCK_DB = 'true';
+  }
 }
 
 /**
