@@ -8,6 +8,8 @@ A full-stack, portfolio-grade real-time collaborative whiteboard demonstrating W
 
 ## Demo
 
+![SketchSync Demo](./assets/demo.gif)
+
 Open two browser windows at the same URL, create a room in one, and join from the other — changes appear in under ~30ms on localhost.
 
 *(Demo GIF here)*
